@@ -1,0 +1,13 @@
+v0.99.0 - 14 Jan 2010
+---------------------
+    - User-space forwarding engine
+    - Bug fixes
+
+v0.90.6 - 6 Oct 2009
+--------------------
+    - Bug fixes
+
+v0.90.5 - 21 Sep 2009
+---------------------
+    - Generalize in-band control to more diverse network setups
+    - Bug fixes

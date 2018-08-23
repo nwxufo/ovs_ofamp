@@ -1,0 +1,11 @@
+/var/log/openvswitch/ovs-openflowd.log {
+        daily
+        compress
+        create 640 root adm
+        delaycompress
+        missingok
+        rotate 30
+        postrotate
+                ovs-appctl --target=ovs-openflowd vlog/reopen
+        endscript
+}
