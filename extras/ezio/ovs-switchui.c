@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ovs-switchui.h"
 
 #include <config.h>
 #include <arpa/inet.h>
@@ -49,6 +50,7 @@
 #include "util.h"
 #include "vconn.h"
 #include "xtoxll.h"
+
 
 #define THIS_MODULE VLM_switchui
 #include "vlog.h"

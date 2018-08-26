@@ -22,6 +22,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <time.h>
+#include <limits.h>
 
 #include "flow.h"
 #include "mac-learning.h"

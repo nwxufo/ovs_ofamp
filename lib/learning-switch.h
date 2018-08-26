@@ -18,6 +18,7 @@
 #define LEARNING_SWITCH_H 1
 
 #include <stdbool.h>
+#include "limits.h"
 
 struct ofpbuf;
 struct rconn;
