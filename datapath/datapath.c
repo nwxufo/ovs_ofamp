@@ -48,6 +48,9 @@
 #include "actions.h"
 #include "dp_dev.h"
 #include "flow.h"
+#ifdef ENABLE_OFAMP
+#include "flow_ofamp.h"
+#endif
 
 #include "compat.h"
 
@@ -529,7 +532,20 @@ void dp_process_received_packet(struct sk_buff *skb, struct net_bridge_port *p)
 
 	/* BHs are off so we don't have to use get_cpu()/put_cpu() here. */
 	stats = percpu_ptr(dp->stats_percpu, smp_processor_id());
-
+#ifdef ENABLE_OFAMP
+	bool is_ofamp = 0;
+	struct ofamp_stamp stamp;
+	switch(flow_extract(skb, p ? p->port_no : ODPP_NONE, &key)) {
+		case 1:		//IP protocol.
+			if (dp->drop_frags) {
+				kfree_skb(skb);
+				stats->n_frags++;
+				return;
+			}
+		case 2: 	//OFAMP protocol.
+			is_ofamp = 1;
+	}
+#else
 	if (flow_extract(skb, p ? p->port_no : ODPP_NONE, &key)) {
 		if (dp->drop_frags) {
 			kfree_skb(skb);
@@ -537,11 +553,22 @@ void dp_process_received_packet(struct sk_buff *skb, struct net_bridge_port *p)
 			return;
 		}
 	}
+#endif
 
 	flow = dp_table_lookup(rcu_dereference(dp->table), &key);
 	if (flow) {
 		struct sw_flow_actions *acts = rcu_dereference(flow->sf_acts);
 		flow_used(flow, skb);
+#ifdef ENABLE_OFAMP
+		if(is_ofamp) {
+			stamp.dpid = dp->dp_idx,
+			stamp.port_in = flow->sf_acts->actions->port,
+			stamp.port_out = flow->key->in_port,
+			stamp.used = ofamp_get_timestamp();
+
+			ofamp_handle(skb, &stamp);
+			}
+#endif
 		execute_actions(dp, skb, &key, acts->actions, acts->n_actions,
 				GFP_ATOMIC);
 		stats->n_hit++;
@@ -550,6 +577,7 @@ void dp_process_received_packet(struct sk_buff *skb, struct net_bridge_port *p)
 		dp_output_control(dp, skb, _ODPL_MISS_NR, 0);
 	}
 }
+
 
 /*
  * Used as br_handle_frame_hook.  (Cannot run bridge at the same time, even on

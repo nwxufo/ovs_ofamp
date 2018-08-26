@@ -247,6 +247,12 @@ static struct sk_buff *set_nw_addr(struct sk_buff *skb,
 			struct udphdr *th = udp_hdr(skb);
 			update_csum(&th->check, skb, old, new, 1);
 		}
+#ifdef IPPROTO_OFAMP
+		  else if (key->nw_proto == IPPROTO_OFAMP) {
+			 struct ofamphdr *oh = ofamp_hdr(skb);
+			 update_csum(&oh->check, skb, old, new, 1);
+		}
+#endif IPROTO_OFAMP
 		update_csum(&nh->check, skb, old, new, 0);
 		*f = new;
 	}
@@ -326,7 +332,10 @@ int dp_xmit_skb(struct sk_buff *skb)
 		kfree_skb(skb);
 		return -E2BIG;
 	}
-
+	
+	/*
+	 * send package by DataLinker Layer Driver.
+	 */
 	dev_queue_xmit(skb);
 
 	return len;

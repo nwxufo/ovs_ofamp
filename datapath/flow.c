@@ -105,6 +105,12 @@ void flow_used(struct sw_flow *flow, struct sk_buff *skb)
 			u8 *tcp = (u8 *)tcp_hdr(skb);
 			tcp_flags = *(tcp + TCP_FLAGS_OFFSET) & TCP_FLAG_MASK;
 		}
+/*
+#ifdef ENABLE_OFAMP
+		if (flow->key.nw_proto == IPPROTO_OFAMP && ofamphdr_ok(skb)) {
+			ofamp_process(struct sw_flow *flow, struct sk_buff *skb);
+#endif
+*/
 	}
 
 	spin_lock_irqsave(&flow->lock, flags);
@@ -190,7 +196,9 @@ static int is_snap(const struct eth_snap_hdr *esh)
 }
 
 /* Parses the Ethernet frame in 'skb', which was received on 'in_port',
- * and initializes 'key' to match.  Returns 1 if 'skb' contains an IP
+ * and initializes 'key' to match.  
+ * Returns 1 if 'skb' contains an IP,
+ * Returns 2 if 'skb' contains an openflow active measure protocol,
  * fragment, 0 otherwise. */
 int flow_extract(struct sk_buff *skb, u16 in_port, struct odp_flow_key *key)
 {
@@ -287,6 +295,23 @@ int flow_extract(struct sk_buff *skb, u16 in_port, struct odp_flow_key *key)
 					key->nw_proto = 0;
 				}
 			}
+//nwx
+#ifdef ENABLE_OFAMP
+			  else if (key->nw_proto == IPPROTO_OFAMP) {
+				  if (ofamphdr_ok(skb)) {
+					  struct ofamphdr *ofamp = ofamp_hdr(skb);
+					  key->tp_src = htons(ofamphdr->tp_src);
+					  key->tp_dst = htons(ofamphdr->tp_dst);
+				  } else {
+					  /* Avoid tricking other code into 
+					   * thinking that this packet has an L4
+					   * header. */
+					  key->nw_proto = 0;
+				  }
+				retval = 2;
+				return retval;
+			}
+#endif
 		} else {
 			retval = 1;
 		}

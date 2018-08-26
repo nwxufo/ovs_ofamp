@@ -15,6 +15,11 @@
 #include <linux/rcupdate.h>
 #include <linux/gfp.h>
 
+#ifdef ENABLE_OFAMP
+//static inline ofamphdr_ok (struct sk_buff *skb);
+long long int ofamp_get_timestamp(void);
+#endif
+
 #include "openvswitch/datapath-protocol.h"
 
 struct sk_buff;
