@@ -17,6 +17,7 @@ openvswitch_sources = \
 	dp_sysfs_dp.c \
 	dp_sysfs_if.c \
 	flow.c \
+	flow_ofamp.c \
 	table.c
 
 openvswitch_headers = \
